@@ -1,0 +1,33 @@
+PLINK v1.9.0-b.7.7 64-bit (22 Oct 2024)
+Options in effect:
+  --geno 0.5
+  --maf 0.3
+  --make-bed
+  --mind 0.1
+  --out filtered
+  --vcf test_data/kgpdata.vcf
+
+Hostname: NSRI_AIMS
+Working directory: C:\Users\lcbsa\OneDrive\Documents\Pipeline\R projects\basics.forensics
+Start time: Wed Jun 18 11:13:22 2025
+
+Random number seed: 1750216402
+16108 MB RAM detected; reserving 8054 MB for main workspace.
+--vcf: filtered-temporary.bed + filtered-temporary.bim + filtered-temporary.fam
+written.
+54 variants loaded from .bim file.
+2548 people (0 males, 0 females, 2548 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to filtered.nosex .
+0 people removed due to missing genotype data (--mind).
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 2548 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is exactly 1.
+0 variants removed due to missing genotype data (--geno).
+33 variants removed due to minor allele threshold(s)
+(--maf/--max-maf/--mac/--max-mac).
+21 variants and 2548 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to filtered.bed + filtered.bim + filtered.fam ... done.
+
+End time: Wed Jun 18 11:13:22 2025
