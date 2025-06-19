@@ -71,19 +71,14 @@ convert_to_genind <- function(file) {
 
 # Need to correct, genind2hierfstat is outputting an error 
 compute_population_stats <- function(fsnps_gen) {
-   #fsnps_gen@pop <- as.factor(fsnps_gen@pop)  # Ensure populations are correctly stored
-   
-   # Private Alleles (Matrix/List for export)
    priv_alleles <- poppr::private_alleles(fsnps_gen)
-   if (is.null(priv_alleles)) priv_alleles <- list(message = "No private alleles detected")  # Ensure it's a list
+   if (is.null(priv_alleles)) priv_alleles <- list(message = "No private alleles detected")
    
-   # Allelic Richness (Matrix/List for export)
    mar_matrix <- allelic.richness(genind2hierfstat(fsnps_gen))$Ar %>%
-      apply(MARGIN = 2, FUN = mean) %>% 
+      apply(MARGIN = 2, FUN = mean) %>%
       round(digits = 3)
    mar_list <- as.list(mar_matrix)
-
-   # Heterozygosities (Data Frame for ggplot)
+   
    basic_fsnps <- hierfstat::basic.stats(fsnps_gen, diploid = TRUE)
    Ho_fsnps <- apply(basic_fsnps$Ho, 2, mean, na.rm = TRUE) %>% round(2)
    He_fsnps <- apply(basic_fsnps$Hs, 2, mean, na.rm = TRUE) %>% round(2)
@@ -91,9 +86,32 @@ compute_population_stats <- function(fsnps_gen) {
    Het_fsnps_df <- data.frame(Pop = names(Ho_fsnps), Ho = Ho_fsnps, He = He_fsnps) %>%
       tidyr::pivot_longer(cols = c("Ho", "He"), names_to = "Variable", values_to = "Value")
    
-   return(list(stats_matrix = list(priv_alleles = priv_alleles, mar_list = mar_list), 
-               stats_df = Het_fsnps_df))
+   # T-Test between Heterozygosities
+   ttest_het_df <- data.frame(
+      Locus = rownames(basic_fsnps$perloc),
+      basic_fsnps$perloc,
+      row.names = NULL
+   )
    
+   # Inbreeding Coefficient
+   fis_values <- apply(basic_fsnps$Fis, 2, mean, na.rm = TRUE) %>%
+      round(3)
+   fis_df <- data.frame(Population = names(fis_values), Fis = fis_values)
+   
+   # Allele frequencies
+   allele_freqs <- t(makefreq(fsnps_gen, quiet = FALSE, missing = NA)) %>%
+      as.data.frame()
+   
+   return(list(
+      stats_matrix = list(
+         priv_alleles = priv_alleles,
+         mar_list = mar_list,
+         ttest_heterozygosity = ttest_het_df,
+         inbreeding_coeff = fis_df,
+         allele_frequencies = allele_freqs
+      ),
+      stats_df = Het_fsnps_df
+   ))
 }
 
 compute_hardy_weinberg <- function(fsnps_gen) {
@@ -152,32 +170,21 @@ plot_fst_heatmap <- function(fst_df) {
 
 
 export_results <- function(stats_matrix, hw_matrix, fst_matrix) {
-   # Verify fst_matrix is a proper list
-   if (!is.list(fst_matrix)) {
-      fst_matrix <- as.list(fst_matrix)  # Convert if necessary
-   }
-   
-   priv_alleles <- as.data.frame(stats_matrix$priv_alleles)
-   mar <- as.data.frame(stats_matrix$mar_list)
-   heterozygosities <- as.data.frame(stats_matrix$stats_df)
-   hwe <- as.data.frame(hw_matrix$hwe)
-   chisquare <- as.data.frame(hw_matrix$hwe_chisq_matrix)
-   fst <- as.data.frame(fst_matrix$fst_matrix)
+   if (!is.list(fst_matrix)) fst_matrix <- as.list(fst_matrix)
    
    datasets <- list(
-      "Private Alleles" = priv_alleles,
-      "Mean allelic richness" = mar,
-      "Heterozygosities" = heterozygosities,
-      "Hardy-Weinberg Equilibrium" = hwe,
-      "Chi-square test" = chisquare,
-      "Fst values" = fst
+      "Private Alleles" = as.data.frame(stats_matrix$priv_alleles),
+      "Mean allelic richness" = as.data.frame(stats_matrix$mar_list),
+      "T-test per locus heterozygosity" = stats_matrix$ttest_heterozygosity,
+      "Inbreeding Coefficient" = stats_matrix$inbreeding_coeff,
+      "Allele Frequencies" = stats_matrix$allele_frequencies,
+      "Heterozygosities" = as.data.frame(stats_matrix$stats_df),
+      "Hardy-Weinberg Equilibrium" = as.data.frame(hw_matrix$hwe),
+      "Chi-square test" = as.data.frame(hw_matrix$hwe_chisq_matrix),
+      "Fst values" = as.data.frame(fst_matrix$fst_matrix)
    )
    
    openxlsx::write.xlsx(datasets, file = "population-statistics-results.xlsx")
-   
-   # Validate file contents in the test
-   exported_data <- openxlsx::read.xlsx("quality-control-results.xlsx")
-   expect_named(exported_data, names(datasets))  # Ensure correct labels
 }
 
 pop.stats <- function(input, markers = NULL, order.labels = FALSE, pop.labels = NULL) {

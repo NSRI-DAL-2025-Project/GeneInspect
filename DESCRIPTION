@@ -1,4 +1,4 @@
-Package: basics.forensics
+Package: GeneInspect
 Type: Package
 Title: Performs QC and calculate basic population statistics for forensics purposes
 Version: 0.0.1.0
