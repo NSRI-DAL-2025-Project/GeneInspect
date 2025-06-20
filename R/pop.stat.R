@@ -27,7 +27,7 @@
 #' @import readr
 #' @import openxlsx
 #' @export
-#' 
+
 load_input_file <- function(input) {
    if (tools::file_ext(input) == "csv") {
       return(readr::read_csv(input))
@@ -38,6 +38,7 @@ load_input_file <- function(input) {
    }
 }
 
+#' @export
 clean_input_data <- function(file) {
    file <- lapply(file, function(x) gsub("|", "/", x, fixed = TRUE))
    file <- as.data.frame(file)
@@ -52,6 +53,7 @@ clean_input_data <- function(file) {
    return(file)
 }
 
+#' @export
 convert_to_genind <- function(file) {
    ind <- as.character(file$Ind)
    pop <- as.character(file$Pop)
@@ -70,6 +72,7 @@ convert_to_genind <- function(file) {
    return(fsnps_gen)
 }
 
+#' @export
 # Need to correct, genind2hierfstat is outputting an error 
 compute_population_stats <- function(fsnps_gen) {
    priv_alleles <- poppr::private_alleles(fsnps_gen)
@@ -115,6 +118,7 @@ compute_population_stats <- function(fsnps_gen) {
    ))
 }
 
+#' @export
 compute_hardy_weinberg <- function(fsnps_gen) {
    # Hardy-Weinberg Equilibrium (List for export)
    fsnps_hwe <- as.numeric(round(pegas::hw.test(fsnps_gen, B = 1000), 6)) 
@@ -130,6 +134,7 @@ compute_hardy_weinberg <- function(fsnps_gen) {
                hw_df = fsnps_hwe_chisq_df))
 }
 
+#' @export
 compute_fst <- function(fsnps_gen) {
    # Compute Fst values as a matrix
    fsnps_fst_matrix <- as.matrix(hierfstat::genet.dist(fsnps_gen, method = "WC84") %>% round(3))
@@ -147,7 +152,7 @@ compute_fst <- function(fsnps_gen) {
    return(list(fst_matrix = fst_list, fst_df = fst_df))  # Returns correctly formatted values
 }
 
-
+#' @export
 plot_heterozygosity <- function(Het_fsnps_df) {
    ggplot(Het_fsnps_df, aes(x = Pop, y = Value, fill = Variable)) +
       geom_bar(stat = "identity", position = position_dodge(width = 0.6), colour = "black") +
@@ -159,6 +164,7 @@ plot_heterozygosity <- function(Het_fsnps_df) {
    ggsave(filename = "heterozygosity_plot.tiff", width = 9, dpi = 300)
 }
 
+#' @export
 plot_fst_heatmap <- function(fst_df) {
    ggplot(fst_df, aes(x = Site1, y = Site2, fill = Fst)) +
       geom_tile(colour = "black") +
@@ -169,7 +175,7 @@ plot_fst_heatmap <- function(fst_df) {
    ggsave(filename = "fst_plot.tiff", width = 8, height = 6, dpi = 600)
 }
 
-
+#' @export
 export_results <- function(stats_matrix, hw_matrix, fst_matrix) {
    if (!is.list(fst_matrix)) fst_matrix <- as.list(fst_matrix)
    
@@ -188,6 +194,7 @@ export_results <- function(stats_matrix, hw_matrix, fst_matrix) {
    openxlsx::write.xlsx(datasets, file = "population-statistics-results.xlsx")
 }
 
+#' @export
 pop.stats <- function(input, markers = NULL, order.labels = FALSE, pop.labels = NULL) {
    if (!require("pacman")) install.packages("pacman")
    pacman::p_load(ade4, adegenet, factoextra, pegas, poppr, ape, dplyr, hierfstat, reshape2, ggplot2, ggrepel, ggpubr,

@@ -18,6 +18,7 @@
 #' @import ggplot2
 #' @import RColorBrewer
 #' @export
+#' 
 # Load the input file (CSV or XLSX)
 load_input_file <- function(input) {
    if (tools::file_ext(input) == "csv") {
@@ -29,6 +30,7 @@ load_input_file <- function(input) {
    }
 }
 
+#' @export
 # Clean the input data
 clean_input_data <- function(file) {
    file <- lapply(file, function(x) gsub(pattern = "|", replacement = "/", x = x, fixed = TRUE))
@@ -43,6 +45,7 @@ clean_input_data <- function(file) {
    return(file)
 }
 
+#' @export
 # Convert cleaned data to genind format
 convert_to_genind <- function(file) {
    ind <- as.character(file$Ind)
@@ -62,6 +65,7 @@ convert_to_genind <- function(file) {
    return(fsnps_gen)
 }
 
+#' @export
 # Perform PCA computation
 compute_pca <- function(fsnps_gen) {
    x <- tab(fsnps_gen, NA.method = "mean")
@@ -84,6 +88,7 @@ compute_pca <- function(fsnps_gen) {
    return(list(pca1 = pca1, percent = percent, ind_coords = ind_coords, centroid = centroid))
 }
 
+#' @export
 get_colors_labels <- function(fsnps_gen, default.colors.labels, pca.labels = NULL, color.palette = NULL) {
    if (default.colors.labels) {
       labels <- levels(as.factor(fsnps_gen@pop))
@@ -100,6 +105,7 @@ get_colors_labels <- function(fsnps_gen, default.colors.labels, pca.labels = NUL
    return(list(labels = labels, colors = colors))  # Ensure named list
 }
 
+#' @export
 # Plotting 
 plot_pca <- function(ind_coords, centroid, percent, labels_colors, filename, width = 8, height = 8, pc_x = 1, pc_y = 2) {
    # Convert matrices to data frames if needed
@@ -133,6 +139,7 @@ plot_pca <- function(ind_coords, centroid, percent, labels_colors, filename, wid
    ggsave(filename = filename, plot = plot, width = width, height = height, dpi = 600)
 }
 
+#' @export
 # Main function
 explore.pca <- function(input, default.colors.labels = TRUE, pca.labels = NULL, color.palette = NULL, set.size = FALSE, width = NULL, height = NULL, add.pc = FALSE, add.pc.x = NULL, add.pc.y = NULL) {
    # Step 1: Load and clean data

@@ -33,6 +33,7 @@ load_input_file <- function(input) {
    return(file)
 }
 
+#' @export
 clean_input_data <- function(file) {
    file <- lapply(file, function(x) gsub("|", "/", x, fixed = TRUE))
    file <- as.data.frame(file)
@@ -48,6 +49,7 @@ clean_input_data <- function(file) {
    return(file)
 }
 
+#' @export
 convert_to_genind <- function(file) {
    ind <- as.character(file$Ind)
    pop <- as.character(file$Pop)
@@ -59,6 +61,7 @@ convert_to_genind <- function(file) {
    return(fsnps_gen)
 }
 
+#' @export
 filter_missing_samples <- function(fsnps_gen, samples.percentage) {
    fsnps_gen_indmiss <- propTyped(fsnps_gen, by = "ind")
    missing_samples <- fsnps_gen_indmiss[which(fsnps_gen_indmiss < samples.percentage)]
@@ -67,6 +70,7 @@ filter_missing_samples <- function(fsnps_gen, samples.percentage) {
    return(list(filtered_data = fsnps_gen_filtered, missing_samples = missing_samples))
 }
 
+#' @export
 filter_missing_snps <- function(fsnps_gen, snps.percentage) {
    fsnps_gen_locmiss <- propTyped(fsnps_gen, by = "loc")
    missing_loci <- fsnps_gen_locmiss[which(fsnps_gen_locmiss < snps.percentage)]
@@ -75,6 +79,7 @@ filter_missing_snps <- function(fsnps_gen, snps.percentage) {
    return(list(filtered_data = fsnps_gen_filtered, missing_loci = missing_loci))
 }
 
+#' @export
 remove_duplicates <- function(fsnps_gen, file) {
    fsnps_gen_dups <- mlg.id(fsnps_gen)
    
@@ -93,6 +98,7 @@ remove_duplicates <- function(fsnps_gen, file) {
    }
 }
 
+#' @export
 basic.qc <- function(input, remove.missing.samples = TRUE, samples.percentage = 0.80, remove.missing.snps = FALSE, snps.percentage = 0.90, remove.duplicates = TRUE) {
    if (!require("pacman")) install.packages("pacman")
    pacman::p_load(ade4, adegenet, factoextra, pegas, poppr, ape, dplyr, readr, openxlsx)

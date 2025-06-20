@@ -19,8 +19,6 @@
 #' filter.dataset("test_data/test.csv", plink.files = FALSE, remove.related = TRUE, kinship.coefficient = 0.0844, geno.value = 0.5, maf.value = 0.05, mind.value = 0.1, limit.LD = FALSE)
 #' filter.dataset("test_data/kgpdata.vcf", plink.files = FALSE, remove.related = FALSE, geno.value = 0.5, maf.value = 0.05, mind.value = 0.1, limit.LD = TRUE, indep.pairwise.kb = 200, indep.pairwise.ct = 30, indep.pairwise.r2 = 0.5)
 #' filter.dataset(plink.files = TRUE, bed.file = "mybed.bed", bim.file = "mybim.bim", fam.file = "myfam.fam", remove.related = FALSE, geno.value = 0.5, maf.value = 0.05, mind.value = 0.1, limit.LD = TRUE, indep.pairwise.kb = 300, indep.pairwise.ct = 25, indep.pairwise.r2 = 0.4)
-#' @export
-
 
 get_plink_path <- function(version = "plink") {
    plink <- Sys.which(version)
@@ -61,6 +59,7 @@ apply_ld_pruning <- function(input.base, kb, ct, r2) {
                    "--recode vcf --out filtered.pruned"))
 }
 
+#' @export
 filter.dataset <- function(input.file,
                            plink.files = FALSE,
                            bed.file = NULL,
