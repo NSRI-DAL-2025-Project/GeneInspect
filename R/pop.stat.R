@@ -27,6 +27,7 @@
 #' @import readr
 #' @import openxlsx
 #' @export
+#' 
 load_input_file <- function(input) {
    if (tools::file_ext(input) == "csv") {
       return(readr::read_csv(input))

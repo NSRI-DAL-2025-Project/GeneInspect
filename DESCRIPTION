@@ -1,8 +1,35 @@
 Package: GeneInspect
 Type: Package
-Title: Performs QC and calculate basic population statistics for forensics purposes
+Title: Performs QC and calculates basic population statistics for forensic purposes
 Version: 0.0.1.0
+Depends: R (>= 4.0.0)
+Imports:
+    ade4,
+    tools,
+    readxl,
+    readr,
+    dplyr,
+    adegenet,
+    ggplot2,
+    RColorBrewer,
+    poppr,
+    tibble,
+    factoextra,
+    pegas,
+    ape,
+    openxlsx,
+    hierfstat,
+    reshape,
+    ggrepel,
+    ggpubr,
+    scales,
+    devtools,
+    miscTools,
+    stringr,
+    lattice,
+    vegan
+Encoding: UTF-8
 RoxygenNote: 7.3.2
-Suggests: 
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
