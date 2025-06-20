@@ -21,183 +21,81 @@
 #' filter.dataset(plink.files = TRUE, bed.file = "mybed.bed", bim.file = "mybim.bim", fam.file = "myfam.fam", remove.related = FALSE, geno.value = 0.5, maf.value = 0.05, mind.value = 0.1, limit.LD = TRUE, indep.pairwise.kb = 300, indep.pairwise.ct = 25, indep.pairwise.r2 = 0.4)
 #' @export
 
-filter.dataset <- function(
-      input.file = input, 
-      plink.files = FALSE,
-      bed.file = bed,
-      bim.file = bim,
-      fam.file = fam,
-      remove.related = FALSE,
-      kinship.coefficient = NULL,
-      geno.value = geno,
-      maf.value = maf,
-      mind.value = mind,
-      limit.LD = FALSE,
-      indep.pairwise.kb = NULL,
-      indep.pairwise.ct = NULL,
-      indep.pairwise.r2 = NULL){
+
+get_plink_path <- function(version = "plink") {
+   plink <- Sys.which(version)
+   if (plink == "") stop(paste(version, "not found in PATH. Ensure it's installed in /usr/local/bin"))
+   return(plink)
+}
+
+run_plink <- function(args, version = "plink") {
+   exec <- get_plink_path(version)
+   message("Using", version, "with:", args)
+   system(paste(exec, args))
+}
+
+relatedness_filter <- function(file.type, input.file, kinship.coefficient) {
+   prefix <- switch(file.type,
+                    VCF = paste("--vcf", input.file),
+                    BCF = paste("--bcf", input.file),
+                    PLINK = paste("--bfile", input.file))
    
-   plink_exec <- function(PLINKoptions = "") system(paste("src/plink.exe",PLINKoptions)) #specify path to plink1.9
-   plink_exec2 <- function(PLINKoptions = "") system(paste("src/plink2.exe",PLINKoptions)) #specify path to plink2.0
+   run_plink(paste(prefix, "--make-king triangle bin --out related"), "plink2")
+   run_plink(paste(prefix, "--king-cutoff related", kinship.coefficient, "--make-bed --out unrelated"), "plink2")
    
+   return("unrelated")  # name of output base from plink2
+}
+
+apply_filters <- function(basefile, geno, mind, maf) {
+   run_plink(paste("--bfile", basefile,
+                   "--geno", geno,
+                   "--mind", mind,
+                   "--maf", maf,
+                   "--make-bed --out filtered"))
+   return("filtered")
+}
+
+apply_ld_pruning <- function(input.base, kb, ct, r2) {
+   run_plink(paste("--bfile", input.base,
+                   "--indep-pairwise", kb, ct, r2,
+                   "--recode vcf --out filtered.pruned"))
+}
+
+filter.dataset <- function(input.file,
+                           plink.files = FALSE,
+                           bed.file = NULL,
+                           bim.file = NULL,
+                           fam.file = NULL,
+                           remove.related = FALSE,
+                           kinship.coefficient = NULL,
+                           geno.value = 0.1,
+                           maf.value = 0.01,
+                           mind.value = 0.1,
+                           limit.LD = FALSE,
+                           indep.pairwise.kb = NULL,
+                           indep.pairwise.ct = NULL,
+                           indep.pairwise.r2 = NULL) {
    
-   if(plink.files == TRUE){
-      input <- sprintf("--bed %s --bim %s --fam %s", bed.file, bim.file, fam.file) # read in plink files
-      
-      if(remove.related == TRUE){
-         # checking related samples
-         plink_exec2(stringr::str_c("--bfile ", 
-                                    input, 
-                                    " --make-king triangle bin --out related"))
-         
-         plink_exec2(stringr::str_c("--bfile ",
-                                    input, 
-                                    " --king-cutoff related ", 
-                                    kinship.coefficient, 
-                                    " --make-bed --out unrelated"))
-         
-         plink_exec(stringr::str_c(
-            "--bfile unrelated --geno ",
-            geno.value,
-            " --mind ", 
-            mind.value,
-            " --maf ",
-            maf.value,
-            " --make-bed --out filtered"))
-         
-         if(limit.LD == FALSE){
-            print("No LD pruning.")
-         } else if (limit.LD == TRUE){
-            plink_exec(stringr::str_c(
-               "--bfile filtered --indep-pairwise ",
-               indep.pairwise.kb,
-               indep.pairwise.ct, 
-               indep.pairwise.r2,
-               " --recode vcf --out filtered.pruned"))
-         }
-         
-      } else if(remove.related == FALSE){
-         
-         plink_exec(stringr::str_c(
-            "--bfile ",
-            input,
-            " --geno ",
-            geno.value,
-            " --mind ", 
-            mind.value,
-            " --maf ",
-            maf.value,
-            " --make-bed --out filtered"))
-         
-         if(limit.LD == FALSE){
-            print("No LD pruning.")
-         } else if (limit.LD == TRUE){
-            plink_exec(stringr::str_c(
-               "--bfile filtered --indep-pairwise ",
-               indep.pairwise.kb,
-               indep.pairwise.ct, 
-               indep.pairwise.r2,
-               " --recode vcf --out filtered.pruned"))
-         }
-         
-      }
-      
-      
-   } else if(plink.files == FALSE){
-      
-      if(remove.related == TRUE){
-         if(tools::file_ext(input.file) == "vcf"){
-            plink_exec2(stringr::str_c(
-               "--vcf ", input.file, 
-               " --make-king triangle bin --out related"))
-            
-            plink_exec2(stringr::str_c("--vcf ", input.file, 
-                                       " --king-cutoff related ", 
-                                       kinship.coefficient, 
-                                       " --make-bed --out unrelated"))
-            
-            # for bcf input files
-         } else if(tools::file_ext(input.file) == "bcf"){
-            plink_exec2(stringr::str_c(
-               "--bcf ", input.file, 
-               " --make-king triangle bin --out related"))
-            
-            plink_exec2(stringr::str_c("--bcf ", input.file, 
-                                       " --king-cutoff related ", 
-                                       kinship.coefficient, 
-                                       " --make-bed --out unrelated"))
-         }
-         
-         plink_exec(stringr::str_c(
-            "--bfile unrelated --geno ",
-            geno.value,
-            " --mind ", 
-            mind.value,
-            " --maf ",
-            maf.value,
-            " --make-bed --out filtered"))
-         
-         if(limit.LD == FALSE){
-            print("No LD pruning.")
-         } else if (limit.LD == TRUE){
-            plink_exec(stringr::str_c(
-               "--bfile filtered --indep-pairwise ",
-               indep.pairwise.kb,
-               indep.pairwise.ct, 
-               indep.pairwise.r2,
-               " --recode vcf --out filtered.pruned"))
-         }
-         
-      } else if(remove.related == FALSE){
-         if(tools::file_ext(input.file) == "vcf"){
-            
-            plink_exec(stringr::str_c(
-               "--vcf ",
-               input.file,
-               " --geno ",
-               geno.value,
-               " --mind ", 
-               mind.value,
-               " --maf ",
-               maf.value,
-               " --make-bed --out filtered"))
-            
-            if(limit.LD == FALSE){
-               print("No LD pruning.")
-            } else if (limit.LD == TRUE){
-               plink_exec(stringr::str_c(
-                  "--bfile filtered --indep-pairwise ",
-                  indep.pairwise.kb,
-                  indep.pairwise.ct, 
-                  indep.pairwise.r2,
-                  " --recode vcf --out filtered.pruned"))
-            }
-            
-         } else if(tools::file_ext(input.file) == "bcf"){
-            
-            plink_exec(stringr::str_c(
-               "--bcf ",
-               input.file,
-               " --geno ",
-               geno.value,
-               " --mind ", 
-               mind.value,
-               " --maf ",
-               maf.value,
-               " --make-bed --out filtered"))
-            
-            if(limit.LD == FALSE){
-               print("No LD pruning.")
-            } else if (limit.LD == TRUE){
-               plink_exec(stringr::str_c(
-                  "--bfile filtered --indep-pairwise ",
-                  indep.pairwise.kb,
-                  indep.pairwise.ct, 
-                  indep.pairwise.r2,
-                  " --recode vcf --out filtered.pruned"))
-            }
-         }
-      }  
-      
-   } 
+   file.type <- detect_file_type(input.file, bed.file, bim.file, fam.file)
+   
+   base_input <- if (file.type == "PLINK") {
+      # build --bfile argument as a single tag
+      paste("--bfile", tools::file_path_sans_ext(bed.file))
+   } else {
+      input.file
+   }
+   
+   if (remove.related) {
+      base_input <- perform_relatedness_filter(file.type, base_input, kinship.coefficient)
+   }
+   
+   filtered_base <- apply_filters(base_input, geno = geno.value, mind = mind.value, maf = maf.value)
+   
+   if (limit.LD) {
+      apply_ld_pruning(filtered_base, indep.pairwise.kb, indep.pairwise.ct, indep.pairwise.r2)
+   } else {
+      message("LD pruning not applied.")
+   }
+   
+   message("Dataset filtering complete.")
 }
